@@ -3,7 +3,15 @@ import numpy as np
 import pandas as pd
 import time
 import pydeck as pdk
-# ---------------- SESSION STATE INIT ----------------
+import re
+def is_valid_name(name):
+    return len(name.split()) >= 2
+
+def is_valid_email(email):
+    return re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", email)
+
+def is_valid_phone(phone):
+    return phone.isdigit() and len(phone) == 10
 if "app_started" not in st.session_state:
     st.session_state.app_started = False
 
@@ -146,21 +154,37 @@ if not st.session_state.app_started:
 # ---------------- LOGIN ----------------
 def login():
     st.title("Login")
-
-    name = st.text_input("Name")
+    name = st.text_input("Full Name")
     email = st.text_input("Email")
+    phone = st.text_input("Phone Number")
+    country_list = [
+    "India", "USA", "UK", "Canada", "Australia", "Germany", "France",
+    "Japan", "China", "Brazil", "South Africa", "Russia"
+]
+    country = st.selectbox("Country", country_list)
+    emergency = st.text_input("Emergency Contact")
+    gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+    age = st.number_input("Age", min_value=1, max_value=100)
 
     if st.button("Login"):
-        if name and email:
+        if not is_valid_name(name):
+            st.error("Enter full name (first & last name)")
+        elif not is_valid_email(email):
+            st.error("Enter valid email (example@gmail.com)")
+        elif not is_valid_phone(phone):
+            st.error("Enter valid 10-digit phone number")
+        elif not country:
+            st.error("Country is required")
+        elif not is_valid_phone(emergency):
+            st.error("Enter valid emergency contact number")
+        else:
             st.session_state.logged_in = True
             st.session_state.page = "dashboard"
             st.rerun()
-        else:
-            st.error("Enter all details")
 
 # ---------------- NAVBAR ----------------
 def navbar():
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
     if col1.button("📍 Live Map"):
         st.session_state.page = "map"
@@ -174,15 +198,18 @@ def navbar():
         st.session_state.page = "nearby"
         st.rerun()
 
+    if col4.button("🏠 Dashboard"):
+        st.session_state.page = "dashboard"
+        st.rerun()
+
+    if col5.button("🚪 Logout"):
+        st.session_state.logged_in = False
+        st.session_state.page = "dashboard"   # 👈 IMPORTANT CHANGE
+        st.rerun()
+
 # ---------------- DASHBOARD ----------------
 def dashboard():
     st.title("📊 Dashboard")
-
-    if st.button("🚪 Logout"):
-        st.session_state.logged_in = False
-        st.session_state.page = "login"
-        st.rerun()
-
     navbar()
     st.write("Select a module to continue.")
 
